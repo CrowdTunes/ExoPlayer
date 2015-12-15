@@ -316,6 +316,7 @@ public class MediaCodecAudioTrackRenderer extends MediaCodecTrackRenderer implem
       throws ExoPlaybackException {
     if (shouldSkip) {
       codec.releaseOutputBuffer(bufferIndex, false);
+      releaseInPlaceBuffer(bufferIndex);
       codecCounters.skippedOutputBufferCount++;
       audioTrack.handleDiscontinuity();
       return true;
@@ -342,8 +343,9 @@ public class MediaCodecAudioTrackRenderer extends MediaCodecTrackRenderer implem
 
     int handleBufferResult;
     try {
+      ByteBuffer newBuf = inPlaceProcessBuffer(bufferIndex, buffer, bufferInfo.offset, bufferInfo.size);
       handleBufferResult = audioTrack.handleBuffer(
-          buffer, bufferInfo.offset, bufferInfo.size, bufferInfo.presentationTimeUs);
+          newBuf, bufferInfo.offset, bufferInfo.size, bufferInfo.presentationTimeUs);
     } catch (AudioTrack.WriteException e) {
       notifyAudioTrackWriteError(e);
       throw new ExoPlaybackException(e);
@@ -358,11 +360,20 @@ public class MediaCodecAudioTrackRenderer extends MediaCodecTrackRenderer implem
     // Release the buffer if it was consumed.
     if ((handleBufferResult & AudioTrack.RESULT_BUFFER_CONSUMED) != 0) {
       codec.releaseOutputBuffer(bufferIndex, false);
+      releaseInPlaceBuffer(bufferIndex);
       codecCounters.renderedOutputBufferCount++;
       return true;
     }
 
     return false;
+  }
+
+  protected ByteBuffer inPlaceProcessBuffer(Integer bufferIndex, ByteBuffer buffer, int offset, int size) {
+    return buffer;
+  }
+
+  protected void releaseInPlaceBuffer(Integer bufferIndex) {
+
   }
 
   @Override
