@@ -155,7 +155,9 @@ public final class Util {
     return Executors.newSingleThreadExecutor(new ThreadFactory() {
       @Override
       public Thread newThread(Runnable r) {
-        return new Thread(r, threadName);
+        Thread t = new Thread(r, threadName);
+        t.setPriority(Thread.MAX_PRIORITY);
+        return t;
       }
     });
   }
